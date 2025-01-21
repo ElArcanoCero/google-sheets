@@ -1,0 +1,50 @@
+function crearPdfDesdeHojaFtRh() {
+  // Obtener la hoja "FT-RH-20 Entrega EPP"
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = libro.getSheetByName("FT-RH-020 Entrega EPP");
+  if (!hoja) {
+    Logger.log("La hoja 'FT-RH-020 Entrega EPP' no fue encontrada.");
+    return;
+  }
+
+  // Obtener los datos de las celdas combinadas
+  var nombre = hoja.getRange("C6").getValues()[0][0];
+  var cedula = hoja.getRange("H7").getValues()[0][0];
+  var codigo = hoja.getRange("c5").getValues()[0][0];
+  var Correocolaborador = hoja.getRange("C8").getValues()[0][0];
+
+  // Construir el mensaje personalizado
+  var mensajePersonalizado = "Buen día Equipo,\n\nInformamos que en el archivo adjunto se encontrará el formato FT-RH-020 'Entrega de Equipos de Protección Personal' de: \n\nCOLABORADOR: " + nombre + ", \n\CÉDULA: " + cedula + " \n\CÓDIGO DE EMPLEADO: " + codigo + "\n\nAgradecemos su atención.";
+
+  // Obtener la URL de exportación de la hoja como PDF
+  var fileId = libro.getId();
+  var url = "https://docs.google.com/spreadsheets/d/" + fileId + "/export?format=pdf&gid=" + hoja.getSheetId();
+
+  // Realizar la solicitud para exportar la hoja como PDF
+  var options = {
+    headers: {
+      'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
+    }
+  };
+  var response = UrlFetchApp.fetch(url, options);
+  var pdfBlob = response.getBlob();
+
+  // Adjuntar el PDF al correo electrónico
+  var destinatarios = ["cad@coordinadora.com", Correocolaborador,"aux2almamed@coordinadora.com","auxalmmed@coordinadora.com","aux1almamed@coordinadora.com","dotacionmed@coordinadora.com","jcaro@coordinadora.com"]; // Agregar direcciones de correo electrónico adicionales aquí
+  var asunto = "Documentos SST - " + nombre + " - " + cedula + " - " + codigo;
+  var nombrePdf = "FT-RH-20 Entrega EPP.pdf";
+
+  // Enviar correo electrónico con el PDF adjunto y el mensaje personalizado
+  MailApp.sendEmail({
+    to: destinatarios.join(","),
+    subject: asunto,
+    body: mensajePersonalizado,
+    attachments: [pdfBlob.setName(nombrePdf)]
+  });
+SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getRange("c5:f5").clearContent();
+SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getRange("b20:c20").clearContent();
+SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getRange("e23:e43").clearContent();
+  
+  // Mostrar un mensaje de confirmación
+  SpreadsheetApp.getUi().alert('La solicitud se envió con éxito.');
+}
